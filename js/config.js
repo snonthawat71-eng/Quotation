@@ -4,6 +4,6 @@
 // - anon public key -> ใส่ใน SUPABASE_ANON_KEY
 // (ดูขั้นตอนละเอียดในไฟล์ SETUP.md)
 window.APP_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: "",
+  SUPABASE_URL: "https://lywisscaxshakuaobghb.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_aw2uN7OK_oIk-qzdh-MheQ_BHwLnHQU",
 };
