@@ -19,8 +19,10 @@ create table if not exists public.companies (
   bank_name text,
   bank_account_name text,
   bank_account_no text,
-  default_notes text,        -- หมายเหตุมาตรฐาน เติมอัตโนมัติตอนสร้างเอกสารใหม่
-  payment_terms text,        -- เงื่อนไขชำระเงินมาตรฐาน
+  default_notes text,        -- หมายเหตุมาตรฐานของใบเสนอราคา เติมอัตโนมัติตอนสร้างเอกสารใหม่
+  payment_terms text,        -- เงื่อนไขชำระเงินมาตรฐานของใบเสนอราคา
+  invoice_notes text,        -- หมายเหตุมาตรฐานของใบแจ้งหนี้ (เว้นว่าง = ใช้ของใบเสนอราคา)
+  invoice_payment_terms text,-- เงื่อนไขชำระเงินของใบแจ้งหนี้ (เว้นว่าง = ใช้ของใบเสนอราคา)
   signer_left text,          -- ป้ายช่องเซ็นซ้าย (ค่าเริ่มต้น Customer)
   signer_right text,         -- ป้ายช่องเซ็นขวา (ค่าเริ่มต้น Designer)
   created_at timestamptz not null default now()

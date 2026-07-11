@@ -19,6 +19,30 @@ export function thaiWrap(s) {
   return String(s ?? '');
 }
 
+// ---------- ธนาคารไทย (ตัวย่อ + สีแบรนด์ ใช้ทำป้ายโลโก้) ----------
+export const BANKS = [
+  { abbr: 'SCB', name: 'ไทยพาณิชย์', color: '#4E2E7F' },
+  { abbr: 'KBANK', name: 'กสิกรไทย', color: '#138F2D' },
+  { abbr: 'BBL', name: 'กรุงเทพ', color: '#1E4598' },
+  { abbr: 'KTB', name: 'กรุงไทย', color: '#00A6E6' },
+  { abbr: 'BAY', name: 'กรุงศรีอยุธยา', color: '#FFB200' },
+  { abbr: 'TTB', name: 'ทีเอ็มบีธนชาต', color: '#0050F0' },
+  { abbr: 'GSB', name: 'ออมสิน', color: '#EB198D' },
+  { abbr: 'BAAC', name: 'ธ.ก.ส.', color: '#009A44' },
+  { abbr: 'GHB', name: 'อาคารสงเคราะห์ (ธอส.)', color: '#F58220' },
+  { abbr: 'KKP', name: 'เกียรตินาคินภัทร', color: '#635F98' },
+  { abbr: 'CIMBT', name: 'ซีไอเอ็มบี ไทย', color: '#EC1C24' },
+  { abbr: 'UOB', name: 'ยูโอบี', color: '#002855' },
+  { abbr: 'LHB', name: 'แลนด์ แอนด์ เฮ้าส์', color: '#6D6E71' },
+  { abbr: 'IBANK', name: 'อิสลามแห่งประเทศไทย', color: '#0E6E4B' },
+];
+export const bankLabel = (b) => `${b.name} (${b.abbr})`;
+// หา entry ธนาคารจากข้อความที่บันทึกไว้ เช่น "ไทยพาณิชย์ (SCB)"
+export function findBank(bankName) {
+  const m = /\(([A-Z]+)\)/.exec(bankName || '');
+  return BANKS.find((b) => m && b.abbr === m[1]) || null;
+}
+
 // ---------- คำนวณยอด ----------
 export function calcTotals(doc) {
   const items = doc.items || [];

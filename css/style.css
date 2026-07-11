@@ -136,6 +136,10 @@ button.btn:active,a.btn:active{opacity:.6}
 .srow .arr{color:#C7C7CC;font-size:20px;font-weight:600}
 .addlink{display:block;padding:12px 2px 4px;color:var(--blue);text-decoration:none;font-size:16px;font-weight:500}
 
+/* ===== ธนาคาร ===== */
+.bankline{display:flex;gap:8px;align-items:center}
+.bank-badge{flex:none;min-width:52px;height:30px;border-radius:8px;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 8px;letter-spacing:.02em}
+
 /* ===== อัปโหลดรูป ===== */
 .imgset{display:flex;gap:12px;flex-wrap:wrap}
 .imgslot{width:calc(33% - 8px);min-width:90px}

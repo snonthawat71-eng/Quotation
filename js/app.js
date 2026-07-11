@@ -1,4 +1,4 @@
-import { fmtMoney, fmtDate, todayISO, esc, calcTotals, resizeImage } from './utils.js';
+import { fmtMoney, fmtDate, todayISO, esc, calcTotals, resizeImage, BANKS, bankLabel, findBank } from './utils.js';
 import { downloadPdf, sharePdf } from './pdf.js';
 
 const cfg = window.APP_CONFIG || {};
@@ -39,16 +39,11 @@ async function loadMasters(force = false) {
   cache = { companies: co.data, customers: cu.data, products: pr.data };
 }
 
-async function nextNumber(type, dateISO) {
-  const prefix = type + (dateISO || todayISO()).replaceAll('-', '');
-  const { data, error } = await sb.from('documents')
-    .select('doc_number').like('doc_number', prefix + '%')
-    .order('doc_number', { ascending: false }).limit(1);
-  if (error) throw error;
-  const last = data && data[0] && data[0].doc_number;
-  const n = last ? (parseInt(last.slice(prefix.length), 10) || 0) + 1 : 1;
-  return prefix + String(n).padStart(4, '0');
-}
+// เลขที่เอกสาร = ประเภท + วันที่เอกสาร (YYYYMMDD) + จำนวนชิ้นงาน 4 หลัก เช่น QT20260616 + 0037
+const genNumber = (type, dateISO, count) =>
+  type + (dateISO || todayISO()).replaceAll('-', '') +
+  String(Math.min(9999, Math.max(1, Math.round(Number(count) || 1)))).padStart(4, '0');
+const sumQty = (items) => (items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0);
 
 // บริษัทสำหรับใช้ทำ PDF: ใช้ข้อมูลล่าสุดจากสมุดบริษัท (มีรูป) ถ้าไม่เจอใช้สำเนาในเอกสาร
 function companyForPdf(doc) {
@@ -183,7 +178,7 @@ async function viewEdit(id, newType) {
     const co = (cache.companies || [])[0] || {};
     draft = {
       doc_type: newType,
-      doc_number: await nextNumber(newType, todayISO()),
+      doc_number: genNumber(newType, todayISO(), 1),
       issue_date: todayISO(),
       due_date: null,
       company_id: co.id || null,
@@ -192,7 +187,9 @@ async function viewEdit(id, newType) {
       items: [{ desc: '', qty: 1, unit: 'ชิ้น', price: 0 }],
       discount: 0, discount_type: 'amount',
       vat_percent: 0, wht_percent: 0,
-      notes: co.default_notes || '', payment_terms: co.payment_terms || '', ref_note: '',
+      notes: (newType === 'INV' ? co.invoice_notes || co.default_notes : co.default_notes) || '',
+      payment_terms: (newType === 'INV' ? co.invoice_payment_terms || co.payment_terms : co.payment_terms) || '',
+      ref_note: '',
       status: 'draft', ref_doc_id: null,
     };
   }
@@ -210,14 +207,17 @@ async function viewEdit(id, newType) {
   <div class="card">
     <h2>ข้อมูลเอกสาร</h2>
     <div class="grid2">
-      <label class="f"><span>เลขที่เอกสาร</span><input data-k="doc_number" value="${esc(draft.doc_number)}"></label>
+      <label class="f"><span>1. วันที่เอกสาร</span><input type="date" data-k="issue_date" value="${esc(draft.issue_date || '')}"></label>
+      <label class="f"><span>2. จำนวนชิ้นงาน (รวมทุกรายการ)</span><input type="number" inputmode="numeric" min="1" id="pieces" value="${sumQty(draft.items)}"></label>
+    </div>
+    <div class="grid2">
+      <label class="f"><span>3. เลขที่เอกสาร (เติมให้อัตโนมัติ แก้ได้)</span><input data-k="doc_number" value="${esc(draft.doc_number)}"></label>
       <label class="f"><span>สถานะ</span><select data-k="status">
         ${Object.entries(statusOpts).map(([k, v]) => `<option value="${k}" ${draft.status === k ? 'selected' : ''}>${v}</option>`).join('')}
       </select></label>
-      <label class="f"><span>วันที่</span><input type="date" data-k="issue_date" value="${esc(draft.issue_date || '')}"></label>
       ${draft.doc_type === 'INV'
         ? `<label class="f"><span>ครบกำหนดชำระ</span><input type="date" data-k="due_date" value="${esc(draft.due_date || '')}"></label>`
-        : '<div></div>'}
+        : ''}
     </div>
     <label class="f"><span>ออกในนาม (บริษัท/ผู้ขาย)</span>
       <select id="companySel">
@@ -271,6 +271,8 @@ async function viewEdit(id, newType) {
         ${[0, 1, 2, 3, 5].map((p) => `<option value="${p}" ${Number(draft.wht_percent) === p ? 'selected' : ''}>${p ? p + '%' : 'ไม่หัก'}</option>`).join('')}
       </select></label>
     </div>
+    <button class="btn" id="gross3" type="button">บวก 3% ลงราคาสินค้า (เผื่อหัก ณ ที่จ่าย)</button>
+    <div class="note" style="margin-top:-4px;margin-bottom:8px">เฉลี่ยบวกราคาต่อหน่วยทุกรายการขึ้น 3% แล้วตั้งหัก ณ ที่จ่าย 3% ให้ — ยอดรับสุทธิจะใกล้เคียงยอดเดิม</div>
     <div class="totals" id="totals"></div>
   </div>
 
@@ -292,6 +294,29 @@ async function viewEdit(id, newType) {
 
   if (navigator.canShare) document.getElementById('share').hidden = false;
 
+  // ---- เลขที่เอกสารอัตโนมัติ: วันที่ + จำนวนชิ้นงาน ----
+  let pieces = sumQty(draft.items);
+  let piecesTouched = false;  // ผู้ใช้พิมพ์จำนวนชิ้นเอง = หยุด sync จากรายการสินค้า
+  let numberTouched = false;  // ผู้ใช้พิมพ์เลขที่เอง = หยุดเติมอัตโนมัติ
+  const $pieces = document.getElementById('pieces');
+  function recomputeNumber() {
+    if (numberTouched) return;
+    draft.doc_number = genNumber(draft.doc_type, draft.issue_date, pieces);
+    const nf = $app.querySelector('[data-k="doc_number"]');
+    if (nf) nf.value = draft.doc_number;
+  }
+  function syncPieces() {
+    if (piecesTouched) return;
+    pieces = sumQty(draft.items);
+    $pieces.value = pieces;
+    recomputeNumber();
+  }
+  $pieces.addEventListener('input', () => {
+    pieces = Number($pieces.value) || 0;
+    piecesTouched = true;
+    recomputeNumber();
+  });
+
   // ---- bindings ----
   $app.querySelectorAll('[data-k]').forEach((el) => {
     el.addEventListener('input', () => {
@@ -299,6 +324,8 @@ async function viewEdit(id, newType) {
       if (el.dataset.k === 'discount' || el.dataset.k === 'vat_percent' || el.dataset.k === 'wht_percent') v = Number(v) || 0;
       if ((el.dataset.k === 'due_date' || el.dataset.k === 'issue_date') && !v) v = null;
       draft[el.dataset.k] = v;
+      if (el.dataset.k === 'doc_number') numberTouched = true;
+      if (el.dataset.k === 'issue_date') recomputeNumber();
       updateTotals();
     });
   });
@@ -344,18 +371,29 @@ async function viewEdit(id, newType) {
           }
         }
         el.closest('.item-row').querySelector('.lt').textContent = `รวม ${fmtMoney((Number(it.qty) || 0) * (Number(it.price) || 0))} ฿`;
+        if (el.dataset.f === 'qty') syncPieces();
         updateTotals();
       });
     });
     $items.querySelectorAll('[data-del]').forEach((b) => {
-      b.onclick = () => { draft.items.splice(Number(b.dataset.del), 1); if (!draft.items.length) draft.items.push({ desc: '', qty: 1, unit: 'ชิ้น', price: 0 }); renderItems(); updateTotals(); };
+      b.onclick = () => { draft.items.splice(Number(b.dataset.del), 1); if (!draft.items.length) draft.items.push({ desc: '', qty: 1, unit: 'ชิ้น', price: 0 }); renderItems(); syncPieces(); updateTotals(); };
     });
   }
   document.getElementById('addItem').onclick = () => {
     const lastUnit = draft.items[draft.items.length - 1]?.unit || 'ชิ้น';
     draft.items.push({ desc: '', qty: 1, unit: lastUnit, price: 0 });
     renderItems();
+    syncPieces();
     $items.querySelector(`[data-i="${draft.items.length - 1}"][data-f="desc"]`)?.focus();
+  };
+  document.getElementById('gross3').onclick = () => {
+    draft.items.forEach((it) => { it.price = Math.round((Number(it.price) || 0) * 1.03 * 100) / 100; });
+    draft.wht_percent = 3;
+    const w = $app.querySelector('[data-k="wht_percent"]');
+    if (w) w.value = '3';
+    renderItems();
+    updateTotals();
+    toast('บวก 3% ลงราคาต่อหน่วยทุกรายการ และตั้งหัก ณ ที่จ่าย 3% แล้ว');
   };
   renderItems();
 
@@ -442,7 +480,7 @@ async function viewEdit(id, newType) {
     if (!(await doSave(true))) return;
     toInvBtn.disabled = true;
     try {
-      const number = await nextNumber('INV', todayISO());
+      const number = genNumber('INV', todayISO(), sumQty(draft.items));
       const co = (cache.companies || []).find((c) => c.id === draft.company_id);
       const { data, error } = await sb.from('documents').insert({
         doc_type: 'INV', doc_number: number, issue_date: todayISO(), due_date: null,
@@ -451,7 +489,8 @@ async function viewEdit(id, newType) {
         company: co ? { name: co.name, address: co.address, tax_id: co.tax_id, phone: co.phone, email: co.email, seller_name: co.seller_name } : null,
         items: draft.items, discount: draft.discount, discount_type: draft.discount_type,
         vat_percent: draft.vat_percent, wht_percent: draft.wht_percent,
-        notes: draft.notes, payment_terms: draft.payment_terms,
+        notes: (co && co.invoice_notes) || draft.notes,
+        payment_terms: (co && co.invoice_payment_terms) || draft.payment_terms,
         ref_note: `${draft.doc_number} (${fmtDate(draft.issue_date)})`,
         status: 'draft', ref_doc_id: id,
       }).select().single();
@@ -505,6 +544,8 @@ async function viewCompany(idOrNew) {
   const isNew = idOrNew === 'new';
   const c = isNew ? {} : (cache.companies || []).find((x) => x.id === idOrNew) || {};
   const draft = { ...c };
+  const curBank = findBank(draft.bank_name);
+  const isOtherBank = !curBank && !!(draft.bank_name || '').trim();
 
   const imgSlot = (key, label) => `
     <div class="imgslot">
@@ -530,7 +571,17 @@ async function viewCompany(idOrNew) {
     </div>
   </div>
   <div class="card"><h2>บัญชีรับเงิน (โชว์ในใบแจ้งหนี้)</h2>
-    <label class="f"><span>ธนาคาร</span><input data-k="bank_name" placeholder="เช่น ไทยพาณิชย์ (SCB)" value="${esc(draft.bank_name || '')}"></label>
+    <label class="f"><span>ธนาคาร</span>
+      <div class="bankline">
+        <span class="bank-badge" id="bankBadge" hidden></span>
+        <select id="bankSel" style="flex:1">
+          <option value="">— ไม่ระบุ —</option>
+          ${BANKS.map((b) => `<option value="${b.abbr}" ${curBank && curBank.abbr === b.abbr ? 'selected' : ''}>${esc(bankLabel(b))}</option>`).join('')}
+          <option value="OTHER" ${isOtherBank ? 'selected' : ''}>อื่นๆ (พิมพ์เอง)</option>
+        </select>
+      </div>
+    </label>
+    <label class="f" id="bankOtherWrap" ${isOtherBank ? '' : 'hidden'}><span>ชื่อธนาคาร (พิมพ์เอง)</span><input id="bankOther" value="${esc(isOtherBank ? draft.bank_name : '')}"></label>
     <div class="grid2">
       <label class="f"><span>ชื่อบัญชี</span><input data-k="bank_account_name" value="${esc(draft.bank_account_name || '')}"></label>
       <label class="f"><span>เลขที่บัญชี</span><input data-k="bank_account_no" value="${esc(draft.bank_account_no || '')}"></label>
@@ -544,9 +595,16 @@ async function viewCompany(idOrNew) {
     </div>
     <div class="note">แนะนำ: ลายเซ็น/ตราประทับเป็นรูปพื้นหลังโปร่งใส (PNG) จะสวยที่สุด</div>
   </div>
-  <div class="card"><h2>ค่าเริ่มต้นเอกสารใหม่</h2>
-    <label class="f"><span>หมายเหตุมาตรฐาน (เติมให้อัตโนมัติ)</span><textarea data-k="default_notes" style="min-height:110px">${esc(draft.default_notes || '')}</textarea></label>
-    <label class="f"><span>เงื่อนไขชำระเงินมาตรฐาน</span><input data-k="payment_terms" placeholder="เช่น ระยะเวลาชำระเงิน(วางบิล) 7-15 วัน นับตั้งแต่ออกใบเสนอราคา" value="${esc(draft.payment_terms || '')}"></label>
+  <div class="card"><h2>ค่าเริ่มต้นใบเสนอราคา</h2>
+    <label class="f"><span>หมายเหตุใบเสนอราคา (เติมให้อัตโนมัติ)</span><textarea data-k="default_notes" style="min-height:110px">${esc(draft.default_notes || '')}</textarea></label>
+    <label class="f"><span>เงื่อนไขชำระเงินใบเสนอราคา</span><input data-k="payment_terms" placeholder="เช่น ระยะเวลาชำระเงิน(วางบิล) 7-15 วัน นับตั้งแต่ออกใบเสนอราคา" value="${esc(draft.payment_terms || '')}"></label>
+  </div>
+  <div class="card"><h2>ค่าเริ่มต้นใบแจ้งหนี้</h2>
+    <label class="f"><span>หมายเหตุใบแจ้งหนี้ (เติมให้อัตโนมัติ)</span><textarea data-k="invoice_notes" style="min-height:90px">${esc(draft.invoice_notes || '')}</textarea></label>
+    <label class="f"><span>เงื่อนไขชำระเงินใบแจ้งหนี้</span><input data-k="invoice_payment_terms" placeholder="เช่น ชำระภายใน 15 วันนับจากวันที่ในใบแจ้งหนี้" value="${esc(draft.invoice_payment_terms || '')}"></label>
+    <div class="note">เว้นว่างข้อไหน = ใช้ค่าเดียวกับใบเสนอราคา</div>
+  </div>
+  <div class="card"><h2>อื่นๆ</h2>
     <div class="grid2">
       <label class="f"><span>ป้ายช่องเซ็นซ้าย</span><input data-k="signer_left" placeholder="Customer" value="${esc(draft.signer_left || '')}"></label>
       <label class="f"><span>ป้ายช่องเซ็นขวา (ฝั่งเรา)</span><input data-k="signer_right" placeholder="Designer" value="${esc(draft.signer_right || '')}"></label>
@@ -558,6 +616,30 @@ async function viewCompany(idOrNew) {
   </div>`;
 
   $app.querySelectorAll('[data-k]').forEach((el) => el.addEventListener('input', () => { draft[el.dataset.k] = el.value; }));
+
+  // ---- ธนาคาร: dropdown + ป้ายโลโก้สีตามแบรนด์ ----
+  const $bankSel = document.getElementById('bankSel');
+  const $bankBadge = document.getElementById('bankBadge');
+  const $bankOtherWrap = document.getElementById('bankOtherWrap');
+  const $bankOther = document.getElementById('bankOther');
+  function updBankBadge() {
+    const b = BANKS.find((x) => x.abbr === $bankSel.value);
+    $bankBadge.hidden = !b;
+    if (b) { $bankBadge.textContent = b.abbr; $bankBadge.style.background = b.color; }
+  }
+  $bankSel.onchange = () => {
+    if ($bankSel.value === 'OTHER') {
+      $bankOtherWrap.hidden = false;
+      draft.bank_name = $bankOther.value;
+    } else {
+      $bankOtherWrap.hidden = true;
+      const b = BANKS.find((x) => x.abbr === $bankSel.value);
+      draft.bank_name = b ? bankLabel(b) : '';
+    }
+    updBankBadge();
+  };
+  $bankOther.addEventListener('input', () => { draft.bank_name = $bankOther.value; });
+  updBankBadge();
 
   ['logo', 'signature', 'stamp'].forEach((key) => {
     const box = document.getElementById('box_' + key);
@@ -587,7 +669,12 @@ async function viewCompany(idOrNew) {
     const { id, user_id, created_at, ...payload } = draft;
     const q = isNew ? sb.from('companies').insert(payload) : sb.from('companies').update(payload).eq('id', c.id);
     const { error } = await q;
-    if (error) return toast(errMsg(error), true);
+    if (error) {
+      const m = errMsg(error);
+      return toast(/invoice_notes|invoice_payment_terms/.test(m)
+        ? 'ฐานข้อมูลยังไม่มีช่องข้อมูลใหม่ — เปิด Supabase > SQL Editor แล้วรันไฟล์ supabase/migration-2.sql หนึ่งครั้ง จากนั้นบันทึกใหม่'
+        : m, true);
+    }
     await loadMasters(true);
     toast('บันทึกแล้ว ✓');
     location.hash = '#/settings';
