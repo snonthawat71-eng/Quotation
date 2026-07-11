@@ -5,15 +5,6 @@ const cfg = window.APP_CONFIG || {};
 const hasCfg = /^https:\/\//.test(cfg.SUPABASE_URL || '') && (cfg.SUPABASE_ANON_KEY || '').length > 20;
 const sb = hasCfg ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
 
-// ลงทะเบียนฟอนต์ Sarabun สำหรับหน้าเว็บ จากข้อมูลที่ฝังใน js/fonts-data.js
-if (window.SARABUN_FONTS && window.FontFace) {
-  const b64buf = (b64) => Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0)).buffer;
-  for (const [weight, b64] of [['400', SARABUN_FONTS.regular], ['700', SARABUN_FONTS.bold]]) {
-    new FontFace('Sarabun', b64buf(b64), { weight }).load()
-      .then((f) => document.fonts.add(f)).catch(() => {});
-  }
-}
-
 const $app = document.getElementById('app');
 let session = null;
 let cache = { companies: null, customers: null, products: null };

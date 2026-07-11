@@ -1,6 +1,11 @@
 import { fmtMoney, fmtDate, thaiWrap, calcTotals } from './utils.js';
 
-// ---------- โหลด pdfmake + ฟอนต์ไทย (โหลดครั้งแรกที่กดสร้าง PDF) ----------
+// ---------- โหลด pdfmake + ฟอนต์ไทย (โหลดครั้งแรกที่กดสร้าง PDF, pin เวอร์ชันจาก CDN) ----------
+const PDFMAKE_URL = 'https://cdn.jsdelivr.net/npm/pdfmake@0.2.20/build/pdfmake.min.js';
+const FONT_URLS = {
+  regular: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/sarabun@0.4.1/400Regular/Sarabun_400Regular.ttf',
+  bold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/sarabun@0.4.1/700Bold/Sarabun_700Bold.ttf',
+};
 let ready = null;
 function loadScript(src) {
   return new Promise((res, rej) => {
@@ -9,11 +14,20 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+async function fontB64(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('ดาวน์โหลดฟอนต์ไม่สำเร็จ');
+  const bytes = new Uint8Array(await resp.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
 export function ensurePdf() {
   if (!ready) ready = (async () => {
-    if (!window.pdfMake) await loadScript('vendor/pdfmake.min.js');
-    const f = window.SARABUN_FONTS;
-    pdfMake.vfs = { 'Sarabun-Regular.ttf': f.regular, 'Sarabun-Bold.ttf': f.bold };
+    if (!window.pdfMake) await loadScript(PDFMAKE_URL);
+    const [reg, bold] = await Promise.all([fontB64(FONT_URLS.regular), fontB64(FONT_URLS.bold)]);
+    pdfMake.vfs = { 'Sarabun-Regular.ttf': reg, 'Sarabun-Bold.ttf': bold };
     pdfMake.fonts = {
       Sarabun: {
         normal: 'Sarabun-Regular.ttf', bold: 'Sarabun-Bold.ttf',

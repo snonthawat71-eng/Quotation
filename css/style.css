@@ -1,4 +1,4 @@
-/* ฟอนต์ Sarabun ลงทะเบียนด้วย FontFace API ใน js/app.js (ข้อมูลอยู่ใน js/fonts-data.js) */
+/* ฟอนต์ Sarabun โหลดจาก Google Fonts (ลิงก์ใน index.html) */
 :root{
   --bg:#f4f4f5;--card:#ffffff;--text:#18181b;--muted:#71717a;--line:#e4e4e7;
   --primary:#18181b;--qt:#e8833a;--inv:#3050c8;--danger:#dc2626;--ok:#16a34a;
