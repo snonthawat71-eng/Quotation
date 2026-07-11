@@ -1,6 +1,6 @@
 /* ===== iOS design language =====
    พื้นหลัง grouped, การ์ดมุมโค้ง, สีระบบ iOS, segmented control, สวิตช์
-   ฟอนต์: SF Pro บนอุปกรณ์ Apple / Sarabun บนอุปกรณ์อื่น (โหลดจาก Google Fonts ใน index.html) */
+   ฟอนต์: Montserrat (อังกฤษ/ตัวเลข) + Noto Sans Thai (ไทย) โหลดจาก Google Fonts ใน index.html */
 :root{
   --bg:#F2F2F7;               /* systemGroupedBackground */
   --card:#FFFFFF;
@@ -19,7 +19,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{
-  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Sarabun','Segoe UI',sans-serif;
+  font-family:'Montserrat','Noto Sans Thai',-apple-system,'Segoe UI',sans-serif;
   background:var(--bg);color:var(--text);font-size:17px;line-height:1.4;
   -webkit-font-smoothing:antialiased;
 }
@@ -30,7 +30,8 @@ body{
 .topbar{position:sticky;top:0;z-index:10;background:rgba(242,242,247,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:center;gap:8px;padding:16px 16px 8px}
 .topbar h1{font-size:30px;font-weight:800;letter-spacing:-.4px;flex:1}
 .topbar .back{font-size:17px;color:var(--blue);text-decoration:none;padding:6px 12px 6px 0;font-weight:400}
-.topbar .iconbtn{text-decoration:none;color:var(--blue);font-size:22px;padding:4px 2px}
+.topbar .iconbtn{text-decoration:none;color:var(--blue);padding:4px 2px;display:flex;align-items:center}
+.topbar .iconbtn svg{display:block}
 
 /* ===== segmented control ===== */
 .tabs{display:flex;background:var(--fill2);border-radius:9px;padding:2px;margin:2px 16px 12px}

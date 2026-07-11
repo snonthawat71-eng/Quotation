@@ -1,10 +1,13 @@
-import { fmtMoney, fmtDate, thaiWrap, calcTotals } from './utils.js';
+import { fmtMoney, fmtDate, calcTotals } from './utils.js';
 
-// ---------- โหลด pdfmake + ฟอนต์ไทย (โหลดครั้งแรกที่กดสร้าง PDF, pin เวอร์ชันจาก CDN) ----------
+// ---------- โหลด pdfmake + ฟอนต์ (โหลดครั้งแรกที่กดสร้าง PDF, pin เวอร์ชันจาก CDN) ----------
+// ไทย: Noto Sans Thai / อังกฤษ+ตัวเลข: Montserrat
 const PDFMAKE_URL = 'https://cdn.jsdelivr.net/npm/pdfmake@0.2.20/build/pdfmake.min.js';
 const FONT_URLS = {
-  regular: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/sarabun@0.4.1/400Regular/Sarabun_400Regular.ttf',
-  bold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/sarabun@0.4.1/700Bold/Sarabun_700Bold.ttf',
+  thaiReg: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-thai@0.4.2/400Regular/NotoSansThai_400Regular.ttf',
+  thaiBold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/noto-sans-thai@0.4.2/700Bold/NotoSansThai_700Bold.ttf',
+  latinReg: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/montserrat@0.4.2/400Regular/Montserrat_400Regular.ttf',
+  latinBold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/montserrat@0.4.2/700Bold/Montserrat_700Bold.ttf',
 };
 let ready = null;
 function loadScript(src) {
@@ -26,22 +29,49 @@ async function fontB64(url) {
 export function ensurePdf() {
   if (!ready) ready = (async () => {
     if (!window.pdfMake) await loadScript(PDFMAKE_URL);
-    const [reg, bold] = await Promise.all([fontB64(FONT_URLS.regular), fontB64(FONT_URLS.bold)]);
-    pdfMake.vfs = { 'Sarabun-Regular.ttf': reg, 'Sarabun-Bold.ttf': bold };
+    const [thaiReg, thaiBold, latinReg, latinBold] = await Promise.all([
+      fontB64(FONT_URLS.thaiReg), fontB64(FONT_URLS.thaiBold),
+      fontB64(FONT_URLS.latinReg), fontB64(FONT_URLS.latinBold),
+    ]);
+    pdfMake.vfs = {
+      'NotoSansThai-Regular.ttf': thaiReg, 'NotoSansThai-Bold.ttf': thaiBold,
+      'Montserrat-Regular.ttf': latinReg, 'Montserrat-Bold.ttf': latinBold,
+    };
     pdfMake.fonts = {
-      Sarabun: {
-        normal: 'Sarabun-Regular.ttf', bold: 'Sarabun-Bold.ttf',
-        italics: 'Sarabun-Regular.ttf', bolditalics: 'Sarabun-Bold.ttf',
+      NotoSansThai: {
+        normal: 'NotoSansThai-Regular.ttf', bold: 'NotoSansThai-Bold.ttf',
+        italics: 'NotoSansThai-Regular.ttf', bolditalics: 'NotoSansThai-Bold.ttf',
+      },
+      Montserrat: {
+        normal: 'Montserrat-Regular.ttf', bold: 'Montserrat-Bold.ttf',
+        italics: 'Montserrat-Regular.ttf', bolditalics: 'Montserrat-Bold.ttf',
       },
     };
   })();
   return ready;
 }
 
+// แยกข้อความเป็นช่วงไทย/อังกฤษ: ช่วงตัวอักษร ASCII (อังกฤษ ตัวเลข เครื่องหมาย)
+// ใช้ฟอนต์ Montserrat ส่วนที่เหลือ (ไทย) ใช้ Noto Sans Thai (ฟอนต์หลักของเอกสาร)
+function mix(s) {
+  s = String(s ?? '');
+  const runs = [];
+  const re = /[\x20-\x7E]+/g;
+  let last = 0, m;
+  while ((m = re.exec(s))) {
+    if (m.index > last) runs.push({ text: s.slice(last, m.index) });
+    runs.push({ text: m[0], font: 'Montserrat' });
+    last = m.index + m[0].length;
+  }
+  if (last < s.length) runs.push({ text: s.slice(last) });
+  if (!runs.length) return '';
+  return (runs.length === 1 && !runs[0].font) ? s : runs;
+}
+
 const COLORS = { QT: '#E8833A', INV: '#3050C8' };
 const TITLES = { QT: 'ใบเสนอราคา', INV: 'ใบแจ้งหนี้' };
 
-const line = (t, opt = {}) => ({ text: thaiWrap(t), ...opt });
+const line = (t, opt = {}) => ({ text: mix(t), ...opt });
 
 // ---------- นิยามเอกสาร PDF (เลย์เอาต์ตามเอกสารตัวอย่าง) ----------
 export function buildDocDef(doc, company) {
@@ -76,7 +106,7 @@ export function buildDocDef(doc, company) {
           widths: [70, '*'],
           body: metaRows.map(([k, v]) => [
             { text: k, color: accent, fontSize: 9.5, border: [false, false, false, false], margin: [0, 2, 0, 2] },
-            { text: v, bold: true, fontSize: 10, border: [false, false, false, false], margin: [0, 2, 0, 2] },
+            { text: mix(v), bold: true, fontSize: 10, border: [false, false, false, false], margin: [0, 2, 0, 2] },
           ]),
         },
         layout: {
@@ -101,11 +131,11 @@ export function buildDocDef(doc, company) {
   // --- ตารางรายการ ---
   const th = (txt, align) => ({ text: txt, color: '#ffffff', fillColor: accent, bold: true, fontSize: 9.5, alignment: align || 'left', margin: [0, 3, 0, 3] });
   const itemRows = (doc.items || []).map((it, i) => [
-    { text: String(i + 1), alignment: 'center', fontSize: 10, margin: [0, 3, 0, 3] },
-    { text: thaiWrap(it.desc || ''), bold: true, fontSize: 10, margin: [0, 3, 0, 3] },
-    { text: `${Number(it.qty) || 0} ${it.unit || ''}`.trim(), alignment: 'center', fontSize: 10, margin: [0, 3, 0, 3] },
-    { text: fmtMoney(it.price), alignment: 'right', fontSize: 10, margin: [0, 3, 0, 3] },
-    { text: fmtMoney((Number(it.qty) || 0) * (Number(it.price) || 0)), alignment: 'right', fontSize: 10, margin: [0, 3, 0, 3] },
+    { text: String(i + 1), font: 'Montserrat', alignment: 'center', fontSize: 10, margin: [0, 3, 0, 3] },
+    { text: mix(it.desc || ''), bold: true, fontSize: 10, margin: [0, 3, 0, 3] },
+    { text: mix(`${Number(it.qty) || 0} ${it.unit || ''}`.trim()), alignment: 'center', fontSize: 10, margin: [0, 3, 0, 3] },
+    { text: fmtMoney(it.price), font: 'Montserrat', alignment: 'right', fontSize: 10, margin: [0, 3, 0, 3] },
+    { text: fmtMoney((Number(it.qty) || 0) * (Number(it.price) || 0)), font: 'Montserrat', alignment: 'right', fontSize: 10, margin: [0, 3, 0, 3] },
   ]);
   const itemsTable = {
     margin: [0, 12, 0, 0],
@@ -147,8 +177,8 @@ export function buildDocDef(doc, company) {
           body: totalRows.map(([k, v], i) => {
             const last = i === totalRows.length - 1;
             return [
-              { text: k, color: accent, fontSize: last ? 10.5 : 10, bold: last, alignment: 'right', margin: [0, 2.5, 0, 2.5] },
-              { text: fmtMoney(v) + ' บาท', bold: true, fontSize: last ? 10.5 : 10, alignment: 'right', margin: [0, 2.5, 0, 2.5] },
+              { text: mix(k), color: accent, fontSize: last ? 10.5 : 10, bold: last, alignment: 'right', margin: [0, 2.5, 0, 2.5] },
+              { text: mix(fmtMoney(v) + ' บาท'), bold: true, fontSize: last ? 10.5 : 10, alignment: 'right', margin: [0, 2.5, 0, 2.5] },
             ];
           }),
         },
@@ -175,7 +205,7 @@ export function buildDocDef(doc, company) {
       columns: [
         { width: 62, text: k, color: accent, fontSize: 10, bold: true },
         { width: 8, text: ':', fontSize: 10 },
-        { width: '*', text: thaiWrap(v), fontSize: 10, bold: true },
+        { width: '*', text: mix(v), fontSize: 10, bold: true },
       ],
       margin: [0, 1, 0, 1],
     });
@@ -212,7 +242,7 @@ export function buildDocDef(doc, company) {
     stack: [
       { stack: above && above.length ? above : [{ text: ' ', fontSize: 26 }], alignment: 'center', margin: [0, 0, 0, 2] },
       {
-        table: { widths: ['*'], body: [[{ text: label, alignment: 'center', fontSize: 9.5, border: [false, true, false, false], margin: [0, 4, 0, 0] }]] },
+        table: { widths: ['*'], body: [[{ text: mix(label), alignment: 'center', fontSize: 9.5, border: [false, true, false, false], margin: [0, 4, 0, 0] }]] },
         layout: { hLineWidth: () => 0.8, hLineColor: () => '#999999' },
       },
     ],
@@ -227,7 +257,7 @@ export function buildDocDef(doc, company) {
       slot('วันที่', null),
       { width: 40, text: '' },
       slot(signerR, sigTopStack),
-      slot('วันที่', [{ text: fmtDate(doc.issue_date), fontSize: 10, bold: true, margin: [0, 16, 0, 0] }]),
+      slot('วันที่', [{ text: fmtDate(doc.issue_date), font: 'Montserrat', fontSize: 10, bold: true, margin: [0, 16, 0, 0] }]),
     ],
     columnGap: 14,
   });
@@ -235,7 +265,7 @@ export function buildDocDef(doc, company) {
   return {
     pageSize: 'A4',
     pageMargins: [40, 34, 40, 100],
-    defaultStyle: { font: 'Sarabun', fontSize: 10, lineHeight: 1.15 },
+    defaultStyle: { font: 'NotoSansThai', fontSize: 10, lineHeight: 1.02 },
     info: { title: doc.doc_number || TITLES[doc.doc_type] },
     footer,
     content,

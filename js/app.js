@@ -86,7 +86,7 @@ window.addEventListener('hashchange', render);
 function viewSetup() {
   $app.innerHTML = `
   <div class="setup">
-    <h1>⚙️ ยังไม่ได้ตั้งค่าระบบหลังบ้าน</h1>
+    <h1>ยังไม่ได้ตั้งค่าระบบหลังบ้าน</h1>
     <p style="margin-bottom:14px">แอปนี้ใช้ Supabase (ฟรี) เก็บข้อมูลและระบบล็อกอิน ตั้งค่าครั้งเดียวตามนี้:</p>
     <ol>
       <li>สมัคร/ล็อกอินที่ <code>supabase.com</code> แล้วสร้างโปรเจกต์ใหม่ (Free)</li>
@@ -103,7 +103,7 @@ function viewSetup() {
 function viewLogin() {
   $app.innerHTML = `
   <div class="auth">
-    <h1>📄 ใบเสนอราคา / ใบแจ้งหนี้</h1>
+    <h1>ใบเสนอราคา / ใบแจ้งหนี้</h1>
     <p>เข้าสู่ระบบเพื่อจัดการเอกสารของคุณ</p>
     <label class="f"><span>อีเมล</span><input id="email" type="email" autocomplete="email" inputmode="email"></label>
     <label class="f"><span>รหัสผ่าน</span><input id="pass" type="password" autocomplete="current-password"></label>
@@ -146,7 +146,7 @@ async function viewList() {
   $app.innerHTML = `
   <div class="topbar">
     <h1>เอกสาร</h1>
-    <a class="iconbtn" href="#/settings" title="ตั้งค่า">⚙️</a>
+    <a class="iconbtn" href="#/settings" title="ตั้งค่า" aria-label="ตั้งค่า"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a>
   </div>
   <div class="tabs">
     <button data-t="QT" class="${activeTab === 'QT' ? 'active' : ''}">ใบเสนอราคา</button>
@@ -225,7 +225,7 @@ async function viewEdit(id, newType) {
         ${(cache.companies || []).length ? '' : '<option value="">— ยังไม่มีข้อมูลบริษัท —</option>'}
       </select>
     </label>
-    ${(cache.companies || []).length ? '' : '<div class="note">⚠️ ไปที่ ตั้งค่า › เพิ่มบริษัท ก่อน เพื่อให้หัวเอกสาร PDF สมบูรณ์</div>'}
+    ${(cache.companies || []).length ? '' : '<div class="note">ไปที่ ตั้งค่า › เพิ่มบริษัท ก่อน เพื่อให้หัวเอกสาร PDF สมบูรณ์</div>'}
   </div>
 
   <div class="card">
@@ -282,11 +282,11 @@ async function viewEdit(id, newType) {
   </div>
 
   <div class="btnbar">
-    <button class="btn primary" id="save">💾 บันทึก</button>
-    <button class="btn" id="pdf">⬇️ ดาวน์โหลด PDF</button>
-    <button class="btn" id="share" hidden>📤 แชร์ PDF (LINE / อีเมล)</button>
-    ${draft.doc_type === 'QT' ? '<button class="btn" id="toInv">🧾 แปลงเป็นใบแจ้งหนี้</button>' : ''}
-    ${draft.ref_doc_id ? `<a class="btn" href="#/edit/${draft.ref_doc_id}">📎 เปิดใบเสนอราคาต้นทาง</a>` : ''}
+    <button class="btn primary" id="save">บันทึก</button>
+    <button class="btn" id="pdf">ดาวน์โหลด PDF</button>
+    <button class="btn" id="share" hidden>แชร์ PDF (LINE / อีเมล)</button>
+    ${draft.doc_type === 'QT' ? '<button class="btn" id="toInv">แปลงเป็นใบแจ้งหนี้</button>' : ''}
+    ${draft.ref_doc_id ? `<a class="btn" href="#/edit/${draft.ref_doc_id}">เปิดใบเสนอราคาต้นทาง</a>` : ''}
     ${id ? '<button class="btn danger" id="del">ลบเอกสาร</button>' : ''}
   </div>`;
 
@@ -553,7 +553,7 @@ async function viewCompany(idOrNew) {
     </div>
   </div>
   <div class="btnbar">
-    <button class="btn primary" id="save">💾 บันทึก</button>
+    <button class="btn primary" id="save">บันทึก</button>
     ${isNew ? '' : '<button class="btn danger" id="del">ลบบริษัทนี้</button>'}
   </div>`;
 
@@ -640,7 +640,7 @@ function simpleForm({ idOrNew, table, backTo, title, list, fields }) {
     ).join('')}
   </div>
   <div class="btnbar">
-    <button class="btn primary" id="save">💾 บันทึก</button>
+    <button class="btn primary" id="save">บันทึก</button>
     ${isNew ? '' : '<button class="btn danger" id="del">ลบ</button>'}
   </div>`;
   $app.querySelectorAll('[data-k]').forEach((el) => el.addEventListener('input', () => {
