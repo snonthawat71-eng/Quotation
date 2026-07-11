@@ -9,22 +9,11 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
-async function fontB64(path) {
-  const buf = await (await fetch(path)).arrayBuffer();
-  let bin = '';
-  const bytes = new Uint8Array(buf);
-  for (let i = 0; i < bytes.length; i += 0x8000)
-    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(bin);
-}
 export function ensurePdf() {
   if (!ready) ready = (async () => {
     if (!window.pdfMake) await loadScript('vendor/pdfmake.min.js');
-    const [reg, bold] = await Promise.all([
-      fontB64('fonts/Sarabun-Regular.ttf'),
-      fontB64('fonts/Sarabun-Bold.ttf'),
-    ]);
-    pdfMake.vfs = { 'Sarabun-Regular.ttf': reg, 'Sarabun-Bold.ttf': bold };
+    const f = window.SARABUN_FONTS;
+    pdfMake.vfs = { 'Sarabun-Regular.ttf': f.regular, 'Sarabun-Bold.ttf': f.bold };
     pdfMake.fonts = {
       Sarabun: {
         normal: 'Sarabun-Regular.ttf', bold: 'Sarabun-Bold.ttf',

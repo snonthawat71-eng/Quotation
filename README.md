@@ -29,7 +29,8 @@ js/config.js          ⚙️ ใส่ค่าเชื่อมต่อ Supab
 js/app.js             ตัวแอป: หน้าจอทั้งหมด + เชื่อมฐานข้อมูล
 js/pdf.js             สร้าง PDF ด้วย pdfmake (เลย์เอาต์เอกสาร)
 js/utils.js           คำนวณยอด / จัดรูปแบบ / ย่อรูป
-fonts/                ฟอนต์ Sarabun (ใช้ทั้งหน้าเว็บและใน PDF)
+js/fonts-data.js      ฟอนต์ Sarabun ฝังเป็น base64 (ใช้ทั้งหน้าเว็บและใน PDF)
+fonts/OFL.txt         สัญญาอนุญาตฟอนต์ Sarabun
 vendor/               ไลบรารี pdfmake + supabase-js (เก็บในโปรเจกต์ ไม่พึ่ง CDN)
 supabase/schema.sql   สคริปต์สร้างตาราง + นโยบายความปลอดภัย (รันครั้งเดียว)
 SETUP.md              คู่มือติดตั้งภาษาไทย
