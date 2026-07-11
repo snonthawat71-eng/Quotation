@@ -152,7 +152,7 @@ export function buildDocDef(doc, company, k = 1) {
     cell(0, { text: fmtMoney((Number(it.qty) || 0) * (Number(it.price) || 0)), font: 'Montserrat', alignment: 'right' }),
   ]);
   const itemsTable = {
-    margin: [0, F(16), 0, 0],
+    margin: [0, F(30), 0, 0],
     table: {
       headerRows: 1,
       widths: [F(24), '*', F(64), F(80), F(80)],
@@ -191,18 +191,18 @@ export function buildDocDef(doc, company, k = 1) {
             const last = i === totalRows.length - 1;
             return [
               {
-                text: mix(kk), color: last ? accent : GRAY, fontSize: last ? F(10) : F(9),
-                bold: last, alignment: 'right', lineHeight: 1.2, margin: [0, F(3), 0, F(3)],
+                text: mix(kk), color: accent, fontSize: last ? F(10) : F(9),
+                bold: last, alignment: 'right', lineHeight: 1.35, margin: [0, F(3.5), 0, F(3.5)],
               },
               {
                 text: mix(fmtMoney(v) + ' บาท'), bold: true, color: INK, fontSize: last ? F(10) : F(9.5),
-                alignment: 'right', lineHeight: 1.2, margin: [0, F(3), 0, F(3)],
+                alignment: 'right', lineHeight: 1.35, margin: [0, F(3.5), 0, F(3.5)],
               },
             ];
           }),
         },
         layout: {
-          hLineWidth: (i, node) => (i === node.table.body.length - 1 ? 0.7 : i === node.table.body.length ? 0.7 : 0),
+          hLineWidth: (i, node) => (i === node.table.body.length ? 0.7 : 0),
           vLineWidth: () => 0,
           hLineColor: () => LINE,
         },
@@ -211,7 +211,8 @@ export function buildDocDef(doc, company, k = 1) {
   };
 
   const content = [
-    { columns: [{ width: '*', stack: seller }, headRight], columnGap: F(24) },
+    // ชื่อผู้ขายเริ่มต่ำกว่าหัวเรื่อง ~ระดับเส้นบนของตารางเลขที่ (ตามเอกสารต้นแบบ)
+    { columns: [{ width: '*', stack: seller, margin: [0, F(33), 0, 0] }, headRight], columnGap: F(24) },
     ...custBlock,
     itemsTable,
     totalsBlock,
@@ -240,22 +241,27 @@ export function buildDocDef(doc, company, k = 1) {
     payRow('ธนาคาร', c.bank_name, findBank(c.bank_name));
   }
 
-  // --- หมายเหตุ (โทนอ่อน ไม่เด่นแข่งเนื้อหาหลัก) ---
+  // --- หมายเหตุ (โทนอ่อน กว้าง ~ครึ่งหน้ากระดาษตามต้นแบบ จัดชิดขอบซ้าย-ขวาเท่ากันทุกบรรทัด) ---
+  // คุมความกว้างด้วย margin ขวา: ขอบขวาของหมายเหตุคงที่เสมอ ไม่ขึ้นกับสเกลย่อ
+  const CONTENT_W = 503;            // A4 กว้าง 595 - ขอบซ้ายขวา 46+46
+  const NOTE_RIGHT = CONTENT_W - 330;
   if (doc.notes) {
     const noteLines = doc.notes.split('\n').map((n) => n.replace(/^\s*[•·*-]\s*/, '').trim()).filter(Boolean);
     if (noteLines.length) {
-      content.push({ text: 'หมายเหตุ', color: FAINT, bold: true, fontSize: F(8), margin: [0, F(20), 0, F(4)] });
+      content.push({ text: '*หมายเหตุ', color: FAINT, bold: true, fontSize: F(8.2), margin: [0, F(38), 0, F(5)] });
       content.push({
         ul: noteLines.map((n) => ({ text: mix(n), margin: [0, 0, 0, F(1.5)] })),
-        fontSize: F(7.8), color: '#787878', lineHeight: 1.3, markerColor: '#B9B9B9',
-        margin: [F(2), 0, 0, 0],
+        alignment: 'justify',
+        fontSize: F(7.8), color: '#787878', lineHeight: 1.4, markerColor: '#B9B9B9',
+        margin: [F(2), 0, NOTE_RIGHT, 0],
       });
     }
   }
   if (doc.payment_terms) {
     content.push({
-      text: [{ text: 'เงื่อนไขการชำระเงิน: ', bold: true }, ...mixRuns(doc.payment_terms)],
-      color: accent, fontSize: F(8.3), lineHeight: 1.3, margin: [0, F(9), 0, 0],
+      text: [{ text: '• ', color: accent }, ...mixRuns(doc.payment_terms)],
+      alignment: 'justify',
+      color: accent, bold: true, fontSize: F(8), lineHeight: 1.4, margin: [F(2), F(8), NOTE_RIGHT, 0],
     });
   }
   if (doc.ref_note) {
@@ -314,11 +320,11 @@ function countPages(dd) {
 
 // บังคับให้จบใน A4 หน้าเดียว: ถ้าล้น ค่อยๆ ย่อสเกลลงจนพอดี
 async function singlePageDD(doc, company) {
-  for (const k of [1, 0.94, 0.88, 0.82, 0.76, 0.7]) {
+  for (const k of [1, 0.94, 0.88, 0.82, 0.76, 0.7, 0.65, 0.6, 0.55]) {
     const dd = buildDocDef(doc, company, k);
     if (await countPages(dd) <= 1) return dd;
   }
-  return buildDocDef(doc, company, 0.65);
+  return buildDocDef(doc, company, 0.5);
 }
 
 export async function createPdf(doc, company) {
