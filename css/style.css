@@ -165,6 +165,17 @@ button.btn:active,a.btn:active{opacity:.6}
 .setup ol{padding-left:20px;display:flex;flex-direction:column;gap:8px}
 .setup code{background:var(--fill2);padding:1px 6px;border-radius:6px;font-size:13.5px;word-break:break-all}
 
+/* ===== PDF preview modal ===== */
+.pdf-modal{position:fixed;inset:0;z-index:100;background:rgba(20,20,22,.82);display:flex;flex-direction:column;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pdf-modal .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;color:#fff;font-size:15px;font-weight:600}
+.pdf-modal .bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pdf-modal .acts{display:flex;gap:8px;flex:none}
+.pdf-modal .acts button{background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:99px;padding:7px 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.pdf-modal .acts .x{width:34px;height:34px;padding:0;font-size:15px}
+.pdf-modal .pages{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 14px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:14px}
+.pdf-page{background:#fff;border-radius:4px;box-shadow:0 6px 24px rgba(0,0,0,.45);max-width:100%;height:auto}
+.pdf-loading{color:rgba(255,255,255,.75);font-size:14.5px;padding:40px 0}
+
 /* ===== toast ===== */
 .toast{
   position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));

@@ -1,0 +1,16 @@
+{
+  "name": "ใบเสนอราคา / ใบแจ้งหนี้",
+  "short_name": "Quotation",
+  "description": "ออกใบเสนอราคาและใบแจ้งหนี้จากมือถือ พร้อมดาวน์โหลด PDF",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

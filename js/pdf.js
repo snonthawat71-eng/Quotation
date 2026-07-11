@@ -341,6 +341,36 @@ export async function pdfBlob(doc, company) {
   return new Promise((res) => pdf.getBlob(res));
 }
 
+// ---------- แสดงตัวอย่าง PDF ด้วย PDF.js (เรนเดอร์ลง canvas เห็นได้ทุกเครื่อง ไม่ต้องดาวน์โหลด) ----------
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+let pdfjsReady = null;
+function ensurePdfjs() {
+  if (!pdfjsReady) pdfjsReady = loadScript(PDFJS_URL).then(() => {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  });
+  return pdfjsReady;
+}
+
+// เรนเดอร์ทุกหน้าของ PDF (ปกติ 1 หน้า) เป็น canvas ลงใน container
+export async function renderPdfPreview(blob, container, maxWidth) {
+  await ensurePdfjs();
+  const pdf = await pdfjsLib.getDocument({ data: await blob.arrayBuffer() }).promise;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const vp1 = page.getViewport({ scale: 1 });
+    const ratio = Math.min(3, (window.devicePixelRatio || 1) * 2); // เรนเดอร์คมชัดบนจอ retina
+    const vp = page.getViewport({ scale: (maxWidth / vp1.width) * ratio });
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pdf-page';
+    canvas.width = vp.width;
+    canvas.height = vp.height;
+    canvas.style.width = Math.floor(vp.width / ratio) + 'px';
+    container.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+  }
+}
+
 export async function sharePdf(doc, company) {
   const blob = await pdfBlob(doc, company);
   const file = new File([blob], (doc.doc_number || 'document') + '.pdf', { type: 'application/pdf' });

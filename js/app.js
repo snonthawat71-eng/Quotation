@@ -1,5 +1,5 @@
 import { fmtMoney, fmtDate, todayISO, esc, calcTotals, resizeImage, BANKS, bankLabel, findBank } from './utils.js';
-import { downloadPdf, sharePdf } from './pdf.js';
+import { downloadPdf, sharePdf, pdfBlob, renderPdfPreview } from './pdf.js';
 
 const cfg = window.APP_CONFIG || {};
 const hasCfg = /^https:\/\//.test(cfg.SUPABASE_URL || '') && (cfg.SUPABASE_ANON_KEY || '').length > 20;
@@ -48,6 +48,41 @@ const sumQty = (items) => (items || []).reduce((s, it) => s + (Number(it.qty) ||
 // บริษัทสำหรับใช้ทำ PDF: ใช้ข้อมูลล่าสุดจากสมุดบริษัท (มีรูป) ถ้าไม่เจอใช้สำเนาในเอกสาร
 function companyForPdf(doc) {
   return (cache.companies || []).find((c) => c.id === doc.company_id) || doc.company || {};
+}
+
+// เปิดดู PDF ในแอปทันที (เรนเดอร์เป็นภาพ ไม่ต้องดาวน์โหลด ใช้ได้ทุกเครื่อง)
+async function openPdfModal(doc, company) {
+  const blob = await pdfBlob(doc, company);
+  const url = URL.createObjectURL(blob);
+  const m = document.createElement('div');
+  m.className = 'pdf-modal';
+  m.innerHTML = `
+    <div class="bar">
+      <span>${esc(doc.doc_number || '')}.pdf</span>
+      <div class="acts">
+        <button class="dl" title="ดาวน์โหลด">ดาวน์โหลด</button>
+        <button class="x" title="ปิด" aria-label="ปิด">✕</button>
+      </div>
+    </div>
+    <div class="pages"><div class="pdf-loading">กำลังเปิดเอกสาร…</div></div>`;
+  document.body.appendChild(m);
+  const close = () => { m.remove(); URL.revokeObjectURL(url); };
+  m.querySelector('.x').onclick = close;
+  m.querySelector('.dl').onclick = () => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (doc.doc_number || 'document') + '.pdf';
+    a.click();
+  };
+  const pages = m.querySelector('.pages');
+  try {
+    const w = Math.min(window.innerWidth, 640) - 28;
+    await renderPdfPreview(blob, pages, w);
+    pages.querySelector('.pdf-loading')?.remove();
+  } catch (err) {
+    close();
+    toast('เปิดตัวอย่างไม่สำเร็จ: ' + errMsg(err), true);
+  }
 }
 
 // ---------- router ----------
@@ -285,6 +320,7 @@ async function viewEdit(id, newType) {
 
   <div class="btnbar">
     <button class="btn primary" id="save">บันทึก</button>
+    <button class="btn" id="preview">ดูตัวอย่าง PDF</button>
     <button class="btn" id="pdf">ดาวน์โหลด PDF</button>
     <button class="btn" id="share" hidden>แชร์ PDF (LINE / อีเมล)</button>
     ${draft.doc_type === 'QT' ? '<button class="btn" id="toInv">แปลงเป็นใบแจ้งหนี้</button>' : ''}
@@ -455,6 +491,13 @@ async function viewEdit(id, newType) {
   }
 
   document.getElementById('save').onclick = () => doSave();
+  document.getElementById('preview').onclick = async (e) => {
+    e.target.disabled = true;
+    try {
+      if (await doSave(true)) await openPdfModal(draft, companyForPdf(draft));
+    } catch (err) { toast('เปิดตัวอย่างไม่สำเร็จ: ' + errMsg(err), true); }
+    e.target.disabled = false;
+  };
   document.getElementById('pdf').onclick = async (e) => {
     e.target.disabled = true;
     try {
@@ -754,6 +797,11 @@ function simpleForm({ idOrNew, table, backTo, title, list, fields }) {
 }
 
 // ---------- start ----------
+// PWA: ลงทะเบียน service worker (ข้ามตอนพัฒนาบน localhost)
+if ('serviceWorker' in navigator && !['localhost', '127.0.0.1'].includes(location.hostname)) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
 if (sb) {
   sb.auth.onAuthStateChange((_event, s) => {
     const was = !!(session && session.user);
