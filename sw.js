@@ -1,5 +1,5 @@
 // Service worker: ทำให้เปิดแอปเร็วและใช้งานออฟไลน์ได้ (ยกเว้นการอ่าน/บันทึกข้อมูลซึ่งต้องต่อเน็ต)
-const CACHE = 'quotation-v1';
+const CACHE = 'quotation-v2';
 const ASSETS = [
   './',
   'index.html',

@@ -3,6 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<script>
+// กันเคส iOS เปิดแบบ "Request Desktop Website" (มักติดมากับไอคอน Add to Home Screen)
+// ซึ่งจะเมิน width=device-width แล้วเรนเดอร์กว้าง ~980px จนทุกอย่างเล็ก
+// ตรวจว่า layout กว้างผิดปกติบนจอสัมผัส แล้วบังคับ viewport เป็นความกว้างจอจริงแบบตัวเลข
+(function () {
+  function fixViewport() {
+    try {
+      if (!window.matchMedia('(pointer: coarse)').matches) return;
+      var sw = Math.min(screen.width, screen.height);
+      if (window.innerWidth > sw * 1.3) {
+        var mv = document.querySelector('meta[name="viewport"]');
+        mv.setAttribute('content', 'width=' + sw + ', initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+      }
+    } catch (e) { /* ignore */ }
+  }
+  fixViewport();
+  window.addEventListener('orientationchange', function () { setTimeout(fixViewport, 300); });
+})();
+</script>
 <meta name="theme-color" content="#F2F2F7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
