@@ -98,12 +98,12 @@ export function buildDocDef(doc, company, k = 1) {
   // ข้อความปกติ / กึ่งหนา (แยกช่วงไทย-อังกฤษให้อัตโนมัติ)
   const reg = (txt, opt = {}) => ({ text: mix(txt), ...opt });
   const sb = (txt, opt = {}) => ({ text: mix(txt, 'MontserratSB'), font: 'NotoSansThaiSB', ...opt });
-  const body = { fontSize: F(9), color: INK, lineHeight: 1.4 };
+  const body = { fontSize: F(9), color: INK, lineHeight: 1.15 };
 
   // --- ส่วนหัวซ้าย: ผู้ขาย (ไม่มีหัวข้อกำกับ) ---
   const seller = [];
   if (c.logo) seller.push({ image: c.logo, fit: [F(92), F(40)], margin: [0, 0, 0, F(8)] });
-  seller.push(sb(c.name || '', { fontSize: F(10), color: INK, lineHeight: 1.4, margin: [0, 0, 0, F(1)] }));
+  seller.push(sb(c.name || '', { fontSize: F(10), color: INK, lineHeight: 1.2, margin: [0, 0, 0, F(1)] }));
   (c.address || '').split('\n').forEach((a) => a.trim() && seller.push(reg(a, body)));
   if (c.tax_id) seller.push(reg('เลขประจำตัวผู้เสียภาษี ' + c.tax_id, body));
   if (c.phone) seller.push(reg('เบอร์โทรศัพท์ ' + c.phone, body));
@@ -120,13 +120,13 @@ export function buildDocDef(doc, company, k = 1) {
   const headRight = {
     width: F(230),
     stack: [
-      { text: TITLES[doc.doc_type], fontSize: F(25), bold: true, color: accent, alignment: 'center', margin: [0, 0, 0, F(8)] },
+      { text: TITLES[doc.doc_type], fontSize: F(25), bold: true, color: accent, alignment: 'center', margin: [0, 0, 0, F(6)] },
       {
         table: {
           widths: [F(80), '*'],
           body: metaRows.map(([kk, v]) => [
-            { text: kk, color: accent, fontSize: F(9), lineHeight: 1.25, border: [false, false, false, false], margin: [0, F(2.5), 0, F(2.5)] },
-            { ...sb(v, { fontSize: F(9.5), color: INK, lineHeight: 1.25 }), border: [false, false, false, false], margin: [0, F(2.5), 0, F(2.5)] },
+            { text: kk, color: accent, fontSize: F(9), lineHeight: 1.1, border: [false, false, false, false], margin: [0, F(1.8), 0, F(1.8)] },
+            { ...sb(v, { fontSize: F(9.5), color: INK, lineHeight: 1.1 }), border: [false, false, false, false], margin: [0, F(1.8), 0, F(1.8)] },
           ]),
         },
         layout: {
@@ -140,15 +140,15 @@ export function buildDocDef(doc, company, k = 1) {
 
   // --- ลูกค้า (ใต้ผู้ขาย ฝั่งซ้าย) ---
   const custBlock = [
-    sb('ลูกค้า', { color: accent, fontSize: F(9.5), margin: [0, F(18), 0, F(10)] }),
-    sb(cust.name || '', { fontSize: F(10), color: INK, lineHeight: 1.4, margin: [0, 0, 0, F(1)] }),
+    sb('ลูกค้า', { color: accent, fontSize: F(9.5), margin: [0, F(14), 0, F(6)] }),
+    sb(cust.name || '', { fontSize: F(10), color: INK, lineHeight: 1.2, margin: [0, 0, 0, F(1)] }),
   ];
   (cust.address || '').split('\n').forEach((a) => a.trim() && custBlock.push(reg(a, body)));
   const custExtra = [];
   if (cust.tax_id) custExtra.push(reg('เลขประจำตัวผู้เสียภาษี ' + cust.tax_id, body));
   if (cust.phone) custExtra.push(reg('เบอร์โทรศัพท์ ' + cust.phone, body));
   if (cust.email) custExtra.push(reg('อีเมล ' + cust.email, body));
-  if (custExtra.length) { custExtra[0].margin = [0, F(4), 0, 0]; custBlock.push(...custExtra); }
+  if (custExtra.length) { custExtra[0].margin = [0, F(3), 0, 0]; custBlock.push(...custExtra); }
 
   // --- ตารางรายการ (สัดส่วนคอลัมน์ ~7/47/14/17/15%) ---
   const th = (txt, align) => ({
@@ -195,12 +195,12 @@ export function buildDocDef(doc, company, k = 1) {
   // ช่องทางการชำระเงิน (ใบแจ้งหนี้) — วางฝั่งซ้ายระดับเดียวกับสรุปยอด ประหยัดพื้นที่แนวตั้ง
   const payStack = [];
   if (doc.doc_type === 'INV' && (c.bank_account_no || c.bank_name || c.bank_account_name)) {
-    payStack.push(sb('ช่องทางการชำระเงิน', { color: accent, fontSize: F(9.5), margin: [0, F(2), 0, F(6)] }));
+    payStack.push(sb('ช่องทางการชำระเงิน', { color: accent, fontSize: F(9.5), margin: [0, F(2), 0, F(4)] }));
     const payRow = (label, value, badge) => {
       if (!value && !badge) return;
       const cols = [
-        { text: label, color: INK, fontSize: F(9), lineHeight: 1.3, width: F(70) },
-        { text: ':', color: INK, fontSize: F(9), lineHeight: 1.3, width: F(10) },
+        { text: label, color: INK, fontSize: F(9), lineHeight: 1.15, width: F(70) },
+        { text: ':', color: INK, fontSize: F(9), lineHeight: 1.15, width: F(10) },
       ];
       if (badge) cols.push({
         width: 'auto',
@@ -208,8 +208,8 @@ export function buildDocDef(doc, company, k = 1) {
         layout: 'noBorders',
         margin: [0, F(0.5), F(5), 0],
       });
-      cols.push({ ...sb(value, { fontSize: F(9), color: INK, lineHeight: 1.3 }), width: '*' });
-      payStack.push({ columns: cols, columnGap: F(4), margin: [0, F(1.8), 0, F(1.8)] });
+      cols.push({ ...sb(value, { fontSize: F(9), color: INK, lineHeight: 1.15 }), width: '*' });
+      payStack.push({ columns: cols, columnGap: F(4), margin: [0, F(1.2), 0, F(1.2)] });
     };
     payRow('ชื่อบัญชี', c.bank_account_name);
     payRow('เลขที่บัญชี', c.bank_account_no);
@@ -217,7 +217,7 @@ export function buildDocDef(doc, company, k = 1) {
   }
 
   const totalsBlock = {
-    margin: [0, F(12), 0, 0],
+    margin: [0, F(10), 0, 0],
     columnGap: F(20),
     columns: [
       payStack.length ? { width: '*', stack: payStack } : { width: '*', text: '' },
@@ -226,11 +226,11 @@ export function buildDocDef(doc, company, k = 1) {
         table: {
           widths: ['*', F(118)],
           body: totalRows.map(([kk, v, last]) => [
-            { text: mix(kk), color: accent, fontSize: F(9.5), lineHeight: 1.35, alignment: 'right', margin: [0, F(3), 0, F(3)] },
+            { text: mix(kk), color: accent, fontSize: F(9.5), lineHeight: 1.1, alignment: 'right', margin: [0, F(2), 0, F(2)] },
             {
               text: mix(fmtMoney(v) + ' บาท', last ? 'Montserrat' : 'MontserratSB'),
               font: 'NotoSansThaiSB', bold: !!last, color: INK,
-              fontSize: last ? F(10) : F(9.5), lineHeight: 1.35, alignment: 'right', margin: [0, F(3), 0, F(3)],
+              fontSize: last ? F(10) : F(9.5), lineHeight: 1.1, alignment: 'right', margin: [0, F(2), 0, F(2)],
             },
           ]),
         },
@@ -257,10 +257,10 @@ export function buildDocDef(doc, company, k = 1) {
   if (doc.notes) {
     const noteLines = doc.notes.split('\n').map((n) => n.replace(/^\s*[•·*-]\s*/, '').trim()).filter(Boolean);
     if (noteLines.length) {
-      content.push(sb('*หมายเหตุ', { color: accent, fontSize: F(9), margin: [0, F(26), 0, F(6)] }));
+      content.push(sb('*หมายเหตุ', { color: accent, fontSize: F(9), margin: [0, F(22), 0, F(4)] }));
       content.push({
-        ul: noteLines.map((n) => ({ text: mix(n), margin: [0, 0, 0, F(1)] })),
-        fontSize: F(8), color: SECONDARY, lineHeight: 1.3, markerColor: SECONDARY,
+        ul: noteLines.map((n) => ({ text: mix(n), margin: [0, 0, 0, F(0.5)] })),
+        fontSize: F(8), color: SECONDARY, lineHeight: 1.12, markerColor: SECONDARY,
         margin: [F(2), 0, NOTE_RIGHT, 0],
       });
     }
@@ -268,12 +268,12 @@ export function buildDocDef(doc, company, k = 1) {
   if (doc.payment_terms) {
     content.push({
       text: [{ text: '• ' }, ...mixRuns(doc.payment_terms, 'MontserratSB')],
-      font: 'NotoSansThaiSB', color: accent, fontSize: F(8.2), lineHeight: 1.3,
-      margin: [F(2), F(5), NOTE_RIGHT, 0],
+      font: 'NotoSansThaiSB', color: accent, fontSize: F(8.2), lineHeight: 1.12,
+      margin: [F(2), F(4), NOTE_RIGHT, 0],
     });
   }
   if (doc.ref_note) {
-    content.push(reg('*Note: ' + doc.ref_note, { color: '#C00000', fontSize: F(7.5), lineHeight: 1.3, margin: [0, F(6), 0, 0] }));
+    content.push(reg('*Note: ' + doc.ref_note, { color: '#C00000', fontSize: F(7.5), lineHeight: 1.12, margin: [0, F(5), 0, 0] }));
   }
 
   // --- ช่องลายเซ็นท้ายหน้าสุดท้าย: ซ้าย Customer/วันที่ ขวา Designer/วันที่ ---
@@ -315,7 +315,7 @@ export function buildDocDef(doc, company, k = 1) {
   return {
     pageSize: 'A4',
     pageMargins: [43, 42, 43, 92],
-    defaultStyle: { font: 'NotoSansThai', fontSize: F(9.5), lineHeight: 1.25, color: INK },
+    defaultStyle: { font: 'NotoSansThai', fontSize: F(9.5), lineHeight: 1.15, color: INK },
     info: { title: doc.doc_number || TITLES[doc.doc_type] },
     header,
     footer,
