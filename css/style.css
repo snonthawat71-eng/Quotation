@@ -22,20 +22,23 @@ body{
   font-family:'Montserrat','Noto Sans Thai',-apple-system,'Segoe UI',sans-serif;
   background:var(--bg);color:var(--text);font-size:17px;line-height:1.4;
   -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior-y:none;
 }
-#app{max-width:640px;margin:0 auto;min-height:100dvh;padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+a,button,input,select,textarea,label{touch-action:manipulation}
+#app{max-width:640px;margin:0 auto;min-height:100dvh;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:calc(112px + env(safe-area-inset-bottom))}
 .loading{padding:48px;text-align:center;color:var(--muted)}
 
 /* ===== nav bar (large title) ===== */
-.topbar{position:sticky;top:0;z-index:10;background:rgba(242,242,247,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:center;gap:8px;padding:16px 16px 8px}
+.topbar{position:sticky;top:0;z-index:10;background:rgba(242,242,247,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:center;gap:8px;padding:calc(14px + env(safe-area-inset-top)) 16px 8px}
 .topbar h1{font-size:30px;font-weight:800;letter-spacing:-.4px;flex:1}
-.topbar .back{font-size:17px;color:var(--blue);text-decoration:none;padding:6px 12px 6px 0;font-weight:400}
-.topbar .iconbtn{text-decoration:none;color:var(--blue);padding:4px 2px;display:flex;align-items:center}
+.topbar .back{font-size:17px;color:var(--blue);text-decoration:none;padding:12px 16px 12px 0;font-weight:400}
+.topbar .iconbtn{text-decoration:none;color:var(--blue);padding:10px;margin:-6px;display:flex;align-items:center}
 .topbar .iconbtn svg{display:block}
 
 /* ===== segmented control ===== */
 .tabs{display:flex;background:var(--fill2);border-radius:9px;padding:2px;margin:2px 16px 12px}
-.tabs button{flex:1;padding:7px 8px;border:none;background:transparent;border-radius:7px;font:inherit;font-size:14px;font-weight:600;color:var(--text)}
+.tabs button{flex:1;padding:11px 8px;min-height:44px;border:none;background:transparent;border-radius:7px;font:inherit;font-size:15px;font-weight:600;color:var(--text)}
 .tabs button.active{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12),0 3px 8px rgba(0,0,0,.06)}
 
 /* ===== search ===== */
@@ -67,7 +70,7 @@ body{
 label.f{display:block;margin-bottom:12px}
 label.f span{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
 input,select,textarea{
-  width:100%;padding:11px 12px;border:none;border-radius:10px;
+  width:100%;padding:12px;min-height:47px;border:none;border-radius:10px;
   font:inherit;font-size:17px;background:var(--fill);color:var(--text);
   appearance:none;-webkit-appearance:none;
 }
@@ -96,7 +99,7 @@ input::placeholder,textarea::placeholder{color:#B0B0B6}
 .item-row input{background:#fff}
 .item-row .top{display:flex;gap:8px;margin-bottom:8px}
 .item-row .top input{flex:1}
-.item-row .del{flex:none;width:38px;border:none;background:none;color:var(--red);font-size:17px;cursor:pointer}
+.item-row .del{flex:none;width:46px;min-height:46px;border:none;background:none;color:var(--red);font-size:20px;cursor:pointer}
 .item-row .nums{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .item-row .lt{grid-column:1/-1;text-align:right;font-size:14px;color:var(--muted)}
 
@@ -130,11 +133,11 @@ button.btn:active,a.btn:active{opacity:.6}
 .fab:active{opacity:.75}
 
 /* ===== แถวตั้งค่า (inset grouped) ===== */
-.srow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 2px;border-bottom:.5px solid var(--sep);text-decoration:none;color:inherit;font-size:16px}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:15px 2px;min-height:50px;border-bottom:.5px solid var(--sep);text-decoration:none;color:inherit;font-size:16px}
 .srow:last-child{border-bottom:none}
 .srow .sub{font-size:13px;color:var(--muted);margin-top:1px}
 .srow .arr{color:#C7C7CC;font-size:20px;font-weight:600}
-.addlink{display:block;padding:12px 2px 4px;color:var(--blue);text-decoration:none;font-size:16px;font-weight:500}
+.addlink{display:block;padding:14px 2px 6px;min-height:44px;color:var(--blue);text-decoration:none;font-size:16px;font-weight:500}
 
 /* ===== ธนาคาร ===== */
 .bankline{display:flex;gap:8px;align-items:center}
@@ -146,10 +149,10 @@ button.btn:active,a.btn:active{opacity:.6}
 .imgslot .box{border:1.5px dashed #C7C7CC;border-radius:12px;background:var(--fill);height:82px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;cursor:pointer}
 .imgslot img{max-width:100%;max-height:100%;object-fit:contain}
 .imgslot .cap{font-size:13px;color:var(--muted);text-align:center;margin-top:5px}
-.imgslot .rm{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:99px;width:22px;height:22px;font-size:11px;cursor:pointer}
+.imgslot .rm{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:99px;width:30px;height:30px;font-size:14px;cursor:pointer}
 
 /* ===== auth ===== */
-.auth{padding:13vh 24px 0;max-width:400px;margin:0 auto}
+.auth{padding:calc(11vh + env(safe-area-inset-top)) 24px 0;max-width:400px;margin:0 auto}
 .auth h1{font-size:28px;font-weight:800;letter-spacing:-.4px;margin-bottom:6px}
 .auth p{color:var(--muted);margin-bottom:22px;font-size:15px}
 .auth input{background:#fff}
@@ -170,8 +173,8 @@ button.btn:active,a.btn:active{opacity:.6}
 .pdf-modal .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;color:#fff;font-size:15px;font-weight:600}
 .pdf-modal .bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pdf-modal .acts{display:flex;gap:8px;flex:none}
-.pdf-modal .acts button{background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:99px;padding:7px 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
-.pdf-modal .acts .x{width:34px;height:34px;padding:0;font-size:15px}
+.pdf-modal .acts button{background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:99px;padding:10px 18px;min-height:42px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.pdf-modal .acts .x{width:42px;height:42px;padding:0;font-size:17px}
 .pdf-modal .pages{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 14px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:14px}
 .pdf-page{background:#fff;border-radius:4px;box-shadow:0 6px 24px rgba(0,0,0,.45);max-width:100%;height:auto}
 .pdf-loading{color:rgba(255,255,255,.75);font-size:14.5px;padding:40px 0}
