@@ -121,7 +121,8 @@ function viewSetup() {
     <ol>
       <li>สมัคร/ล็อกอินที่ <code>supabase.com</code> แล้วสร้างโปรเจกต์ใหม่ (Free)</li>
       <li>เข้าเมนู <b>SQL Editor</b> วางโค้ดจากไฟล์ <code>supabase/schema.sql</code> แล้วกด Run</li>
-      <li>เมนู <b>Authentication → Sign In / Providers → Email</b> ปิด "Confirm email" (แนะนำ เพื่อให้สมัครแล้วใช้ได้ทันที)</li>
+      <li>เมนู <b>Authentication → Users → Add user</b> สร้างบัญชีของคุณ (ติ๊ก Auto Confirm)
+          และปิด "Allow new users to sign up" ใน Sign In / Providers เพื่อให้เป็นระบบส่วนตัว</li>
       <li>เมนู <b>Settings → API</b> คัดลอก Project URL และ anon public key</li>
       <li>นำ 2 ค่านั้นไปใส่ในไฟล์ <code>js/config.js</code> แล้วเปิดเว็บใหม่</li>
     </ol>
@@ -134,12 +135,11 @@ function viewLogin() {
   $app.innerHTML = `
   <div class="auth">
     <h1>ใบเสนอราคา / ใบแจ้งหนี้</h1>
-    <p>เข้าสู่ระบบเพื่อจัดการเอกสารของคุณ</p>
+    <p>ระบบส่วนตัว — เข้าสู่ระบบเพื่อใช้งาน</p>
     <label class="f"><span>อีเมล</span><input id="email" type="email" autocomplete="email" inputmode="email"></label>
     <label class="f"><span>รหัสผ่าน</span><input id="pass" type="password" autocomplete="current-password"></label>
     <div class="msg" id="authmsg"></div>
     <button class="btn primary" id="signin">เข้าสู่ระบบ</button>
-    <button class="btn" id="signup">สมัครสมาชิกใหม่</button>
   </div>`;
   const email = () => document.getElementById('email').value.trim();
   const pass = () => document.getElementById('pass').value;
@@ -147,19 +147,14 @@ function viewLogin() {
     const m = document.getElementById('authmsg');
     m.textContent = t; m.className = 'msg show ' + (ok ? 'ok' : 'err');
   };
-  document.getElementById('signin').onclick = async () => {
+  const signin = async () => {
     if (!email() || !pass()) return msg('กรอกอีเมลและรหัสผ่านก่อน');
     const { error } = await sb.auth.signInWithPassword({ email: email(), password: pass() });
     if (error) return msg('เข้าสู่ระบบไม่สำเร็จ: ' + errMsg(error));
     session = null; location.hash = '#/'; render();
   };
-  document.getElementById('signup').onclick = async () => {
-    if (!email() || pass().length < 6) return msg('กรอกอีเมล และรหัสผ่านอย่างน้อย 6 ตัวอักษร');
-    const { data, error } = await sb.auth.signUp({ email: email(), password: pass() });
-    if (error) return msg('สมัครไม่สำเร็จ: ' + errMsg(error));
-    if (data.session) { session = null; render(); }
-    else msg('สมัครแล้ว! ตรวจอีเมลเพื่อกดยืนยัน แล้วกลับมาเข้าสู่ระบบ', true);
-  };
+  document.getElementById('signin').onclick = signin;
+  document.getElementById('pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') signin(); });
 }
 
 // ---------- รายการเอกสาร ----------
